@@ -1,10 +1,8 @@
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
-from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
+from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix, precision_recall_curve
 import pandas as pd
+import numpy as np
 import shap 
 from collections import Counter
 from scipy.stats import randint, uniform
@@ -76,6 +74,7 @@ class RandomForestModel(IModel):
         print("优化后最佳参数:")
         print(random_search.best_params_)
         print(f"最终AUC: {random_search.best_score_:.4f}")
+        self.write_result(f"result/{self._feature_filter_type}/randomForest_param.txt", f"最佳参数组合: {random_search.best_params_}")
         self._model = random_search.best_estimator_
         return random_search.best_estimator_
 
@@ -90,10 +89,16 @@ class RandomForestModel(IModel):
         print("\n--- 模型评估报告 ---")
         print(classification_report(y, y_pred))
 
+        y_proba = model.predict_proba(X)[:, 1]
+        precisions, recalls, thresholds = precision_recall_curve(y, y_proba)
+        f1_scores = 2 * (precisions * recalls) / (precisions + recalls + 1e-8)
+        best_threshold = thresholds[np.argmax(f1_scores)]
+        y_pred_optimized = (y_proba > best_threshold).astype(int)
+
         auc = roc_auc_score(y, model.predict_proba(X)[:, 1])
         print(f"ROC AUC Score: {auc:.4f}")
         file = f"result/{self._feature_filter_type}/randomForest.txt"
-        result = f"--- 模型评估报告 ---\n{classification_report(y, y_pred)}\n\n\nROC AUC Score: {auc:.4f}\n"
+        result = f"--- 模型评估报告 ---\n{classification_report(y, y_pred)}\n\n\nROC AUC Score: {auc:.4f}\n\n\n=== 阈值优化后 (Threshold = %.3f) ==={best_threshold}\n\n\n最终分类报告\n\n{classification_report(y, y_pred_optimized)}"
         self.write_result(file, result)
 
     def feature_influence_sort(self):

@@ -4,9 +4,9 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, roc_curve
-import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, precision_recall_curve
 from sklearn.model_selection import GridSearchCV
+import numpy as np
 from model import IModel
 
 class LogisticModel(IModel):
@@ -30,6 +30,7 @@ class LogisticModel(IModel):
 
         print(f"最优参数: {grid_search.best_params_}")  
         print(f"最佳分数: {grid_search.best_score_:.4f}")
+        self.write_result(f"result/{self._feature_filter_type}/logistic_param.txt", f"最佳参数组合: {grid_search.best_params_}")
         self._model = grid_search.best_estimator_
         return grid_search.best_estimator_
     
@@ -43,10 +44,19 @@ class LogisticModel(IModel):
         print("\n--- 模型评估报告 ---")
         print(classification_report(y, y_pred))
 
+        y_proba = model.predict_proba(X)[:, 1]
+        precisions, recalls, thresholds = precision_recall_curve(y, y_proba)
+        f1_scores = 2 * (precisions * recalls) / (precisions + recalls + 1e-8)
+        best_threshold = thresholds[np.argmax(f1_scores)]
+        y_pred_optimized = (y_proba > best_threshold).astype(int)
+
+        print("\n=== 阈值优化后 (Threshold = %.3f) ===" % best_threshold)
+        print("分类报告:\n", classification_report(y, y_pred_optimized))
+
         auc = roc_auc_score(y, model.predict_proba(X)[:, 1])
         print(f"ROC AUC Score: {auc:.4f}")
         file = f"result/{self._feature_filter_type}/logistic.txt"
-        result = f"--- 模型评估报告 ---\n{classification_report(y, y_pred)}\n\n\nROC AUC Score: {auc:.4f}\n"
+        result = f"--- 模型评估报告 ---\n{classification_report(y, y_pred)}\n\n\nROC AUC Score: {auc:.4f}\n\n\n=== 阈值优化后 (Threshold = %.3f) ==={best_threshold}\n\n\n最终分类报告\n\n{classification_report(y, y_pred_optimized)}"
         self.write_result(file, result)
     
     def feature_influence_sort(self):

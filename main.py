@@ -39,7 +39,7 @@ if __name__ == "__main__":
     ]
     for fp in feature_processors:
         df = fp.process_data(df)
-    feature_count = [4, 6, 8, 10, 12]
+    feature_count = [2, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     for count in feature_count:
         feature_filters = [
             RFEBalanceRandomForest(count),
