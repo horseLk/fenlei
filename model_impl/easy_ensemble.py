@@ -71,4 +71,61 @@ class EasyEnsemble(IModel):
         self.write_result(file, result)
     
     def feature_influence_sort(self):
-        print('need to implements....')
+        """
+        计算并排序特征重要性
+        返回按重要性降序排列的特征列表
+        """
+        if not hasattr(self, '_model') or self._model is None:
+            print("模型尚未训练，请先调用 train_model() 方法")
+            return None
+        
+        model = self._model
+        train = self._train
+        y = train['是否凝血']
+        X_raw = train.iloc[:, 1:]
+        X = pd.get_dummies(X_raw, drop_first=True)
+        
+        # 获取特征名称
+        feature_names = X.columns.tolist()
+        
+        # 计算所有基分类器的特征重要性
+        all_importances = []
+        for estimator in model.estimators_:
+            if hasattr(estimator, 'feature_importances_'):
+                all_importances.append(estimator.feature_importances_)
+            elif hasattr(estimator, 'named_steps') and 'classifier' in estimator.named_steps:
+                # 如果是Pipeline，获取其中的分类器
+                classifier = estimator.named_steps['classifier']
+                if hasattr(classifier, 'feature_importances_'):
+                    all_importances.append(classifier.feature_importances_)
+        
+        if not all_importances:
+            print("无法获取特征重要性信息")
+            return None
+        
+        # 计算平均特征重要性
+        avg_importance = np.mean(all_importances, axis=0)
+        
+        # 创建特征重要性字典
+        feature_importance_dict = dict(zip(feature_names, avg_importance))
+        
+        # 按重要性降序排序
+        sorted_features = sorted(feature_importance_dict.items(), 
+                               key=lambda x: x[1], reverse=True)
+        
+        # 打印特征重要性排名
+        print("\n=== EasyEnsemble 特征重要性排名 ===")
+        for i, (feature, importance) in enumerate(sorted_features):
+            print(f"{i+1:2d}. {feature}: {importance:.6f}")
+        
+        # 保存结果到文件
+        result_content = "=== EasyEnsemble 特征重要性排名 ===\n\n"
+        for i, (feature, importance) in enumerate(sorted_features):
+            result_content += f"{i+1:2d}. {feature}: {importance:.6f}\n"
+        
+        file_path = f"result/{self._feature_filter_type}/EasyEnsemble_feature_importance.txt"
+        self.write_result(file_path, result_content)
+        
+        print(f"\n特征重要性结果已保存到: {file_path}")
+        
+        return sorted_features
