@@ -10,6 +10,9 @@ from model_impl.svm import SVMModel
 if __name__ == "__main__":
     train = pd.read_csv("data/train.csv")
     test = pd.read_csv("data/test.csv")
+    train.to_csv("result/model_check/train.csv", index=False)
+    test.to_csv("result/model_check/test.csv", index=False)
+            
     model = LogisticModel(train, test, f"model_check")
     model.train_model()
     model.hit_rate()
