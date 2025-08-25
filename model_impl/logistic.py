@@ -15,7 +15,8 @@ class LogisticModel(IModel):
 
     def train_model(self):
         train = self._train
-        y = train['是否凝血']
+        self.write_result(f"result/{self._feature_filter_type}/logistic_features.txt", f"数据保留特征: {train.columns.tolist()}")
+        y = train['是否凝血']   
         X_raw = train.iloc[:, 1:]
         X = pd.get_dummies(X_raw, drop_first=True) # drop_first=True可以避免多重共线性
         param_grid = {

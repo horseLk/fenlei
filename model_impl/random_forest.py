@@ -14,6 +14,7 @@ class RandomForestModel(IModel):
 
     def train_model(self):
         train = self._train
+        self.write_result(f"result/{self._feature_filter_type}/randomForest_features.txt", f"数据保留特征: {train.columns.tolist()}")
         y = train['是否凝血']
         X_raw = train.iloc[:, 1:]
         # 3. 将分类变量进行独热编码 (One-Hot Encoding)

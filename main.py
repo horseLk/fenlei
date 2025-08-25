@@ -58,6 +58,8 @@ if __name__ == "__main__":
             
             train = pd.read_csv("data/train.csv")
             test = pd.read_csv("data/test.csv")
+            train.to_csv(f"result/{filter_handler.name()}_feature_count_{count}/train.csv", index=False)
+            test.to_csv(f"result/{filter_handler.name()}_feature_count_{count}/test.csv", index=False)
             models = [
                 BalanceRandomForest(train, test, f"{filter_handler.name()}_feature_count_{count}"),
                 DecisionTree(train, test, f"{filter_handler.name()}_feature_count_{count}"),
