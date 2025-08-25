@@ -14,7 +14,7 @@ from feature_processor_impl.rfe_with_balance_random_forest import RFEBalanceRand
 from feature_processor_impl.rfe_with_gradient_boosting import RFEGradientBoosting
 from feature_processor_impl.rfe_with_random_forest import RFERandomForest
 from feature_processor_impl.rfe_with_svm_choice import RFESVM
-
+import os
 import numpy as np
 
 
@@ -58,6 +58,7 @@ if __name__ == "__main__":
             
             train = pd.read_csv("data/train.csv")
             test = pd.read_csv("data/test.csv")
+            os.makedirs(f"result/{filter_handler.name()}_feature_count_{count}", exist_ok=True)
             train.to_csv(f"result/{filter_handler.name()}_feature_count_{count}/train.csv", index=False)
             test.to_csv(f"result/{filter_handler.name()}_feature_count_{count}/test.csv", index=False)
             models = [
